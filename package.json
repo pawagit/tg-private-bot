@@ -1,0 +1,17 @@
+{
+  "name": "tg-telegraf-privatebot-barebone",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/bot.js"
+  },
+  "keywords": [],
+  "author": "pawagit",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/firestore": "^7.1.0",
+    "dotenv": "^16.3.1",
+    "telegraf": "^4.14.0"
+  }
+}

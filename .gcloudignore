@@ -1,0 +1,27 @@
+node_modules/
+_not_used/
+_private/
+utils/
+*~
+.git
+.gitignore
+
+
+/sessions/**
+!/sessions/
+
+# Ignore all files and directories in public/css
+public/css/**
+# Include the empty public/css directory
+!public/css/
+
+# Ignore all files and directories in public/js
+public/js/**
+# Include the empty public/js directory
+!public/js/
+
+README.md
+.eslintrc.json
+.gitignore
+nodemon.json
+package-lock.json

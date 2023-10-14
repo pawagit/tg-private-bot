@@ -1,0 +1,12 @@
+node_modules
+build
+npm-debug.log
+.nyc
+.env
+.DS_Store
+
+# Custom patterns
+_private
+_not_used
+credentials
+cloudbuild.yaml
