@@ -151,6 +151,11 @@ bot.use( async (ctx, next) => {
           }
         case 'requested': //case 'new':
           ctx.reply('Your request is still pending. Please await approval');
+          // Delete 'not authorized / request access' message if present
+          if (ctx.callbackQuery && /^requestAccess\|(.+)$/.test(ctx.callbackQuery.data)) {
+            const messageId = ctx.callbackQuery.message.message_id;
+            await ctx.telegram.deleteMessage(ctx.callbackQuery.message.chat.id, messageId);
+          }
           return Promise.resolve();
         case 'rejected':
           console.warn('Rejected user is still using this bot!')
@@ -225,22 +230,19 @@ bot.action(accessRequestPattern, async (ctx) => {
   const user = ctx.from;
   const userId = user.id;
 
-  // Check if a request is already pending for this user
+  // Check if a request is was already granted for this user
   const firestoreUser = await store.getUser(userId);
-
-  if (firestoreUser && firestoreUser.status == "new") {
-    ctx.telegram.sendMessage(userId,`Your request is still pending! \nPlease be patient.`);
-    return;
-  } else if (firestoreUser && firestoreUser.status == "registered") {
-     // Delete 'not authorized / request access' message if present
-     if (ctx.callbackQuery && /^requestAccess\|(.+)$/.test(ctx.callbackQuery.data)) {
-        const messageId = ctx.callbackQuery.message.message_id;
-        await ctx.telegram.deleteMessage(ctx.callbackQuery.message.chat.id, messageId);
-      }
+  if (firestoreUser && firestoreUser.status == "registered") {
+    // Delete 'not authorized / request access' message if present
+    if (ctx.callbackQuery && /^requestAccess\|(.+)$/.test(ctx.callbackQuery.data)) {
+      const messageId = ctx.callbackQuery.message.message_id;
+      await ctx.telegram.deleteMessage(ctx.callbackQuery.message.chat.id, messageId);
+    }
     ctx.telegram.sendMessage(userId,`Your request is already approved.`);
     return;
   } else if (firestoreUser) {
     // Skip all actions for exsting - non-new & not-registered users
+    console.warn('We should never get here...')
     return;
   }
 
