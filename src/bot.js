@@ -139,6 +139,18 @@ bot.use( async (ctx, next) => {
         return next(); //proceed to the next middleware
       }
 
+      // Delete 'not authorized / request access' message if present
+      if (ctx.callbackQuery && /^requestAccess\|(.+)$/.test(ctx.callbackQuery.data)) {
+        const messageId = ctx.callbackQuery.message.message_id;
+        try {
+          await ctx.telegram.deleteMessage(ctx.callbackQuery.message.chat.id, messageId);
+        }
+        catch(e) {
+          console.error(e)
+        }
+      }
+
+      // Proceed according to the user's status
       switch (status) {
         case 'registered':
           return next(); //proceed to the next middleware
@@ -151,20 +163,9 @@ bot.use( async (ctx, next) => {
           }
         case 'requested': //case 'new':
           ctx.reply('Your request is still pending. Please await approval');
-          // Delete 'not authorized / request access' message if present
-          if (ctx.callbackQuery && /^requestAccess\|(.+)$/.test(ctx.callbackQuery.data)) {
-            const messageId = ctx.callbackQuery.message.message_id;
-            await ctx.telegram.deleteMessage(ctx.callbackQuery.message.chat.id, messageId);
-          }
           return Promise.resolve();
         case 'rejected':
           console.warn('Rejected user is still using this bot!')
-
-          // Delete 'not authorized / request access' message if present
-          if (ctx.callbackQuery && /^requestAccess\|(.+)$/.test(ctx.callbackQuery.data)) {
-            const messageId = ctx.callbackQuery.message.message_id;
-            await ctx.telegram.deleteMessage(ctx.callbackQuery.message.chat.id, messageId);
-          }
           return Promise.resolve();
         default:
           return Promise.resolve();
