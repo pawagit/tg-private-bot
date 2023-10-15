@@ -154,6 +154,12 @@ bot.use( async (ctx, next) => {
           return Promise.resolve();
         case 'rejected':
           console.warn('Rejected user is still using this bot!')
+
+          // Delete 'not authorized / request access' message if present
+          if (ctx.callbackQuery && /^requestAccess\|(.+)$/.test(ctx.callbackQuery.data)) {
+            const messageId = ctx.callbackQuery.message.message_id;
+            await ctx.telegram.deleteMessage(ctx.callbackQuery.message.chat.id, messageId);
+          }
           return Promise.resolve();
         default:
           return Promise.resolve();
@@ -225,8 +231,16 @@ bot.action(accessRequestPattern, async (ctx) => {
   if (firestoreUser && firestoreUser.status == "new") {
     ctx.telegram.sendMessage(userId,`Your request is still pending! \nPlease be patient.`);
     return;
+  } else if (firestoreUser && firestoreUser.status == "registered") {
+     // Delete 'not authorized / request access' message if present
+     if (ctx.callbackQuery && /^requestAccess\|(.+)$/.test(ctx.callbackQuery.data)) {
+        const messageId = ctx.callbackQuery.message.message_id;
+        await ctx.telegram.deleteMessage(ctx.callbackQuery.message.chat.id, messageId);
+      }
+    ctx.telegram.sendMessage(userId,`Your request is already approved.`);
+    return;
   } else if (firestoreUser) {
-    // Skip all actions for exsting - non-new users
+    // Skip all actions for exsting - non-new & not-registered users
     return;
   }
 
@@ -277,8 +291,8 @@ bot.action(allowOrRejectUserPattern, async (ctx) => {
 
   // Inform the user
   let msg = (allow) 
-    ? 'Acces is granted! You can now play with me!'
-    : 'Acces is rejected! You cannot use this bot. Sorry mate.';
+    ? 'Access is granted! You can now play with me!'
+    : 'Access is rejected! You cannot use this bot. Sorry mate.';
   await ctx.telegram.sendMessage(userId,msg);
 
   // Inform the admin
