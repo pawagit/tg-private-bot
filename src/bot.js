@@ -143,6 +143,13 @@ bot.use( async (ctx, next) => {
         case 'registered':
           return next(); //proceed to the next middleware
         case 'new':
+          if (ctx.callbackQuery && /^requestAccess\|(.+)$/.test(ctx.callbackQuery.data)) {
+            await handleAccessRequested(ctx,user,userId);
+            return Promise.resolve();
+          } else {
+            return Promise.resolve();
+          }
+        case 'requested': //case 'new':
           ctx.reply('Your request is still pending. Please await approval');
           return Promise.resolve();
         case 'rejected':
@@ -223,20 +230,29 @@ bot.action(accessRequestPattern, async (ctx) => {
     return;
   }
 
+  // Process a new user's request to access the bot 
+  await handleAccessRequested(ctx,user,userId)
+});
+
+
+async function handleAccessRequested(ctx,user,userId) {
+  // Update the user status to 'requested'
+  await store.updateUser(userId, {status:'requested'})
+
   // Prepare the request message to the admin
   const msg = `Hello Admin! \nI want to use your bot! Please allow me to use it. \n\nMy User Details: \n${JSON.stringify(user,null,2)}`;
   const options = Markup.inlineKeyboard([
     Markup.button.callback('Allow', `allow|${userId}`),
     Markup.button.callback('Reject', `reject|${userId}`),
   ]);
-  ctx.telegram.sendMessage(adminUserId, msg, options);
+  await ctx.telegram.sendMessage(adminUserId, msg, options);
 
   // Prepare the message to the user
-  ctx.telegram.sendMessage(userId,`Your request is sent to the admins for approval. \nPlease await their response. \nThey usually respond within 24 hours.`);
+  await ctx.telegram.sendMessage(userId,`Your request is sent to the admins for approval. \nPlease await their response. \nThey usually respond within 24 hours.`);
   
   // Answer the callback query
-  ctx.answerCbQuery('Request sent! We will get back to you.')
-});
+  await ctx.answerCbQuery('Request sent! We will get back to you.')
+}
 
 
 /**
